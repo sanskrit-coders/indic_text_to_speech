@@ -13,9 +13,13 @@ logging.basicConfig(
     format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s"
 )
 
+
 class KeyPressTriggeredRecorder(object):
-    '''A recorder class for recording audio to a WAV file.
+    '''A recorder class for recording audio to a given WAV file.
     Records in mono by default.
+    
+    Example usage:
+        recorder.KeyPressTriggeredRecorder("test.wav").record()
     '''
 
     def __init__(self, fname, trigger_key=keyboard.Key.space, channels=1, rate=44100, frames_per_buffer=1024):
@@ -29,15 +33,15 @@ class KeyPressTriggeredRecorder(object):
         self.recording_file = RecordingFile(
             fname=fname, mode='wb', channels=self.channels, rate=self.rate,
             frames_per_buffer=self.frames_per_buffer)
-        self.key_listener = keyboard.Listener(self.on_press, self.on_release)
+        self.key_listener = keyboard.Listener(self._on_press, self._on_release)
 
-    def on_press(self, key):
+    def _on_press(self, key):
         logging.info(key)
         if key == self.trigger_key:
             self.key_pressed = True
         return True
 
-    def on_release(self, key):
+    def _on_release(self, key):
         logging.info(key)
         if key == self.trigger_key:
             self.key_pressed = False
@@ -64,6 +68,10 @@ class KeyPressTriggeredRecorder(object):
 
 
 class RecordingFile(object):
+    """"Type of object corresponding to a particular recording.
+    
+    See :py:class:KeyPressTriggeredRecorder for example usage.
+    """
     def __init__(self, fname, mode, channels,
                  rate, frames_per_buffer):
         self.fname = fname
@@ -110,7 +118,7 @@ class RecordingFile(object):
                                      rate=self.rate,
                                      input=True,
                                      frames_per_buffer=self.frames_per_buffer,
-                                     stream_callback=self.get_callback())
+                                     stream_callback=self._get_callback())
         self._stream.start_stream()
         return self
 
@@ -118,7 +126,7 @@ class RecordingFile(object):
         self._stream.stop_stream()
         return self
 
-    def get_callback(self):
+    def _get_callback(self):
         def callback(in_data, frame_count, time_info, status):
             self.wavefile.writeframes(in_data)
             return in_data, pyaudio.paContinue
