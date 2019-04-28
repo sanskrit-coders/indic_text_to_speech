@@ -15,14 +15,14 @@ logging.basicConfig(
 
 
 class KeyPressTriggeredRecorder(object):
-    '''A recorder class for recording audio to a given WAV file.
+    '''Helps record audio during the duration of key-presses.
     Records in mono by default.
     
     Example usage:
         recorder.KeyPressTriggeredRecorder("test.wav").record()
     '''
 
-    def __init__(self, fname, trigger_key=keyboard.Key.space, channels=1, rate=44100, frames_per_buffer=1024):
+    def __init__(self, trigger_key=keyboard.Key.space, channels=1, rate=44100, frames_per_buffer=1024):
         self.trigger_key = trigger_key
         self.key_pressed = False
         self.recording_started = False
@@ -30,40 +30,45 @@ class KeyPressTriggeredRecorder(object):
         self.channels = channels
         self.rate = rate
         self.frames_per_buffer = frames_per_buffer
-        self.recording_file = RecordingFile(
-            fname=fname, mode='wb', channels=self.channels, rate=self.rate,
-            frames_per_buffer=self.frames_per_buffer)
         self.key_listener = keyboard.Listener(self._on_press, self._on_release)
 
+    def reset(self):
+        self.key_pressed = False
+        self.recording_started = False
+        self.recording_stopped = False
+
     def _on_press(self, key):
-        logging.info(key)
+        # logging.info(key)
         if key == self.trigger_key:
             self.key_pressed = True
         return True
 
     def _on_release(self, key):
-        logging.info(key)
+        # logging.info(key)
         if key == self.trigger_key:
             self.key_pressed = False
             # Close listener
             return False
         return True
 
-    def record(self):
-        logging.info("Waiting for key")
+    def record(self, fname):
+        logging.info("Waiting for any key")
+        self.reset()
         self.key_listener.start()
         import threading
+        recording_file = RecordingFile(
+            fname=fname, mode='wb', channels=self.channels, rate=self.rate,
+            frames_per_buffer=self.frames_per_buffer)
         def keychek_loop():
             if self.key_pressed and not self.recording_started:
-                logging.info("Starting recording")
-                self.recording_file.start_recording()
+                logging.info("Speak while you keep the key pressed.")
+                recording_file.start_recording()
                 self.recording_started = True
             elif not self.key_pressed and self.recording_started:
-                self.recording_file.stop_recording()
+                recording_file.stop_recording()
                 self.recording_stopped = True
             if not self.recording_stopped:
                 threading.Timer(.1, keychek_loop).start()
-        logging.info("Press the key")
         keychek_loop()
 
 
@@ -83,11 +88,10 @@ class RecordingFile(object):
         self.chosen_device_index = -1
         for x in range(0,self._pa.get_device_count()):
             info = self._pa.get_device_info_by_index(x)
-            logging.info(self._pa.get_device_info_by_index(x))
+            # logging.info(self._pa.get_device_info_by_index(x))
             if info["name"] == "pulse":
                 self.chosen_device_index = info["index"]
-                logging.info("Chosen index: %d", self.chosen_device_index)        
-        
+                # logging.debug("Chosen index: %d", self.chosen_device_index)     
         self.wavefile = self._prepare_file(self.fname, self.mode)
         self._stream = None
 
@@ -112,7 +116,7 @@ class RecordingFile(object):
 
     def start_recording(self):
         # Use a stream with a callback in non-blocking mode
-        logging.info("Starting recording")
+        # logging.info("Starting recording")
         self._stream = self._pa.open(format=pyaudio.paInt16,
                                      channels=self.channels,
                                      rate=self.rate,
@@ -139,6 +143,8 @@ class RecordingFile(object):
         self.wavefile.close()
 
     def _prepare_file(self, fname, mode='wb'):
+        import os
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
         wavefile = wave.open(fname, mode)
         wavefile.setnchannels(self.channels)
         wavefile.setsampwidth(self._pa.get_sample_size(pyaudio.paInt16))
