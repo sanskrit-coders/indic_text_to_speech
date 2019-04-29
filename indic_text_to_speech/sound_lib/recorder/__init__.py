@@ -25,54 +25,55 @@ class KeyPressTriggeredRecorder(object):
         recorder.KeyPressTriggeredRecorder("test.wav").record()
     '''
 
-    def __init__(self, trigger_key=keyboard.Key.space, channels=1, rate=44100, frames_per_buffer=1024):
+    def __init__(self, trigger_key=keyboard.Key.ctrl_l, channels=1, rate=44100, frames_per_buffer=1024):
         self.trigger_key = trigger_key
-        self.key_pressed = False
-        self.recording_started = False
-        self.recording_stopped = False
+        self._key_pressed = False
+        self._recording_started = False
+        self._recording_stopped = False
         self.channels = channels
         self.rate = rate
         self.frames_per_buffer = frames_per_buffer
-        self.key_listener = keyboard.Listener(self._on_press, self._on_release)
-        self.task_scheduler = sched.scheduler(time.time, time.sleep)
+        self._key_listener = keyboard.Listener(self._on_press, self._on_release)
+        self._task_scheduler = sched.scheduler(time.time, time.sleep)
+        self._pa = pyaudio.PyAudio()
 
     def reset(self):
-        self.key_pressed = False
-        self.recording_started = False
-        self.recording_stopped = False
+        self._key_pressed = False
+        self._recording_started = False
+        self._recording_stopped = False
 
     def _on_press(self, key):
         # logging.info(key)
         if key == self.trigger_key:
-            self.key_pressed = True
+            self._key_pressed = True
         return True
 
     def _on_release(self, key):
         # logging.info(key)
         if key == self.trigger_key:
-            self.key_pressed = False
+            self._key_pressed = False
             # Close listener
             return False
         return True
 
     def record(self, fname):
         self.reset()
-        self.key_listener.start()
+        self._key_listener.start()
         recording_file = RecordingFile(
             fname=fname, mode='wb', channels=self.channels, rate=self.rate,
-            frames_per_buffer=self.frames_per_buffer)
+            frames_per_buffer=self.frames_per_buffer, pyaudio_obj=self._pa)
         logging.info("Recording: %s at %s", os.path.basename(fname), fname )
         logging.info("Record while you keep pressing: %s", self.trigger_key)
         def keychek_loop():
-            if self.key_pressed and not self.recording_started:
+            if self._key_pressed and not self._recording_started:
                 recording_file.start_recording()
-                self.recording_started = True
-            elif not self.key_pressed and self.recording_started:
+                self._recording_started = True
+            elif not self._key_pressed and self._recording_started:
                 recording_file.stop_recording()
-                self.recording_stopped = True
-            if not self.recording_stopped:
-                self.task_scheduler.enter(delay=.1, priority=1, action=keychek_loop)
-                self.task_scheduler.run()
+                self._recording_stopped = True
+            if not self._recording_stopped:
+                self._task_scheduler.enter(delay=.1, priority=1, action=keychek_loop)
+                self._task_scheduler.run()
         keychek_loop()
 
 
@@ -82,20 +83,13 @@ class RecordingFile(object):
     See :py:class:KeyPressTriggeredRecorder for example usage.
     """
     def __init__(self, fname, mode, channels,
-                 rate, frames_per_buffer):
+                 rate, frames_per_buffer, pyaudio_obj):
         self.fname = fname
         self.mode = mode
         self.channels = channels
         self.rate = rate
         self.frames_per_buffer = frames_per_buffer
-        self._pa = pyaudio.PyAudio()
-        self.chosen_device_index = -1
-        for x in range(0,self._pa.get_device_count()):
-            info = self._pa.get_device_info_by_index(x)
-            # logging.info(self._pa.get_device_info_by_index(x))
-            if info["name"] == "pulse":
-                self.chosen_device_index = info["index"]
-                # logging.debug("Chosen index: %d", self.chosen_device_index)     
+        self._pa = pyaudio_obj
         self.wavefile = self._prepare_file(self.fname, self.mode)
         self._stream = None
 
@@ -107,12 +101,13 @@ class RecordingFile(object):
 
     def record(self, duration):
         # Use a stream with no callback function in blocking mode
-        self._stream = self._pa.open(format=pyaudio.paInt16,
-                                     channels=self.channels,
-                                     rate=self.rate,
-                                     input_device_index=self.chosen_device_index,
-                                     input=True,
-                                     frames_per_buffer=self.frames_per_buffer)
+        self._stream = self._pa.open(
+            format=pyaudio.paInt16,
+            channels=self.channels,
+            rate=self.rate, 
+            # input_device_index=self.recording_device_index,
+            input=True,
+            frames_per_buffer=self.frames_per_buffer)
         for _ in range(int(self.rate / self.frames_per_buffer * duration)):
             audio = self._stream.read(self.frames_per_buffer)
             self.wavefile.writeframes(audio)

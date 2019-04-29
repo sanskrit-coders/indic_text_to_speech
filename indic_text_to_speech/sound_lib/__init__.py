@@ -36,7 +36,6 @@ class Library(object):
             for syllable in uncovered_syllables:
                 file_path = self.get_path(syllable=syllable)
                 recorder.KeyPressTriggeredRecorder().record(fname=file_path)
-                audio_segment = AudioSegment.from_wav(file_path)
     
     def get_syllable_files(self, syllables):
         self.expand_to_cover(syllables=syllables)
@@ -47,7 +46,7 @@ class Library(object):
         audio_segment = AudioSegment.from_wav(self.get_path(syllable=syllable))
         # Careful with the below let you end up removing vyanjana-s and even some svara-s!
         # audio_segment = pydub.effects.speedup(audio_segment, playback_speed=1)
-        audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=200, silence_thresh=-32, padding=200)
+        audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=50, silence_thresh=-32, padding=50)
         return audio_segment
 
     def get_syllable_audio_segments(self, syllables):
