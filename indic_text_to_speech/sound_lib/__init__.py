@@ -41,14 +41,15 @@ class Library(object):
     def get_syllable_files(self, syllables):
         self.expand_to_cover(syllables=syllables)
         return [self.get_path(syllable=syllable) for syllable in syllables]
-    
-    def get_syllable_audio_segments(self, syllables):
-        syllable_files = self.get_syllable_files(syllables=syllables)
-        audio_segments = []
+
+    def get_audio_for_syllable(self, syllable):
         import pydub.effects
-        for syllable_file in syllable_files:
-            audio_segment = AudioSegment.from_wav(syllable_file)
-            # Careful with the below let you end up removing vyanjana-s and even some svara-s!
-            audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=300, silence_thresh=-32, padding=200)
-            audio_segments.append(audio_segment)
+        audio_segment = AudioSegment.from_wav(self.get_path(syllable=syllable))
+        # Careful with the below let you end up removing vyanjana-s and even some svara-s!
+        # audio_segment = pydub.effects.speedup(audio_segment, playback_speed=1)
+        audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=200, silence_thresh=-32, padding=200)
+        return audio_segment
+
+    def get_syllable_audio_segments(self, syllables):
+        audio_segments = [self.get_audio_for_syllable(syllable=syllable) for syllable in syllables]
         return audio_segments
