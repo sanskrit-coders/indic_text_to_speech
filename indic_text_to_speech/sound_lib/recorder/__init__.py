@@ -62,10 +62,9 @@ class KeyPressTriggeredRecorder(object):
             fname=fname, mode='wb', channels=self.channels, rate=self.rate,
             frames_per_buffer=self.frames_per_buffer)
         logging.info("Recording: %s at %s", os.path.basename(fname), fname )
-        logging.info("Press the recording key, whose keycode is:%s", self.trigger_key)
+        logging.info("Record while you keep pressing: %s", self.trigger_key)
         def keychek_loop():
             if self.key_pressed and not self.recording_started:
-                logging.info("Speak while you keep the key pressed.")
                 recording_file.start_recording()
                 self.recording_started = True
             elif not self.key_pressed and self.recording_started:
