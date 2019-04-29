@@ -1,5 +1,8 @@
 # Inspirations: https://stackoverflow.com/questions/44894796/pyaudio-and-pynput-recording-while-a-key-is-being-pressed-held-down, https://gist.github.com/sloria/5693955
 import logging
+import os
+import sched
+import time
 import wave
 
 import pyaudio
@@ -31,6 +34,7 @@ class KeyPressTriggeredRecorder(object):
         self.rate = rate
         self.frames_per_buffer = frames_per_buffer
         self.key_listener = keyboard.Listener(self._on_press, self._on_release)
+        self.task_scheduler = sched.scheduler(time.time, time.sleep)
 
     def reset(self):
         self.key_pressed = False
@@ -52,13 +56,13 @@ class KeyPressTriggeredRecorder(object):
         return True
 
     def record(self, fname):
-        logging.info("Waiting for any key")
         self.reset()
         self.key_listener.start()
-        import threading
         recording_file = RecordingFile(
             fname=fname, mode='wb', channels=self.channels, rate=self.rate,
             frames_per_buffer=self.frames_per_buffer)
+        logging.info("Recording: %s at %s", os.path.basename(fname), fname )
+        logging.info("Press the recording key, whose keycode is:%s", self.trigger_key)
         def keychek_loop():
             if self.key_pressed and not self.recording_started:
                 logging.info("Speak while you keep the key pressed.")
@@ -68,7 +72,8 @@ class KeyPressTriggeredRecorder(object):
                 recording_file.stop_recording()
                 self.recording_stopped = True
             if not self.recording_stopped:
-                threading.Timer(.1, keychek_loop).start()
+                self.task_scheduler.enter(delay=.1, priority=1, action=keychek_loop)
+                self.task_scheduler.run()
         keychek_loop()
 
 
