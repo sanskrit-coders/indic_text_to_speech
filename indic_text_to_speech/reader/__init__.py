@@ -10,7 +10,7 @@ def from_plain_text(text, sentence_separator_pattern="[।॥!]"):
     return regex.split(sentence_separator_pattern, text)
 
 
-def from_markdown_file(file_path):
+def from_markdown_file(file_path, ignore_comments=True):
     sentences = []
     import yamldown as yamldown
     import regex
@@ -18,7 +18,14 @@ def from_markdown_file(file_path):
         (yml, md) = yamldown.load(in_file_obj)
         if "title" in yml:
             sentences.append(yml["title"])
+
+        ## Treat headings as sentences.
         md = regex.sub("^#(.+)\s*$", "$1॥", md)
-        md = regex.sub("\+\+\+\(.+?\)\+\+\+", "", md)
+
+        if ignore_comments:
+            ## Ignore comments.
+            md = regex.sub("\+\+\+\(.+?\)\+\+\+", "", md)
+
+        # TODO: Process image alternate texts and captions?
         sentences.extend(from_plain_text(md))
     return sentences
