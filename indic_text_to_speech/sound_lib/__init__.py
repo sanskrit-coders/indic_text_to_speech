@@ -3,7 +3,7 @@ import os
 
 from pydub import AudioSegment
 
-from indic_text_to_speech.sound_lib import recorder
+from audio_utils import recorder
 
 
 for handler in logging.root.handlers[:]:
@@ -19,7 +19,7 @@ class Library(object):
         self.path = path
 
     def get_path(self, syllable):
-        return os.path.join(self.path, "syllable_sounds", syllable[0], syllable + ".wav")
+        return os.path.join(self.path, "syllable_sounds", syllable[0], syllable + ".mp3")
     
     def get_uncovered(self, syllables):
         uncovered_syllables = []
@@ -43,7 +43,7 @@ class Library(object):
 
     def get_audio_for_syllable(self, syllable):
         import pydub.effects
-        audio_segment = AudioSegment.from_wav(self.get_path(syllable=syllable))
+        audio_segment = AudioSegment.from_mp3(self.get_path(syllable=syllable))
         # Careful with the below let you end up removing vyanjana-s and even some svara-s!
         # audio_segment = pydub.effects.speedup(audio_segment, playback_speed=1)
         audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=50, silence_thresh=-32, padding=50)
@@ -52,3 +52,4 @@ class Library(object):
     def get_syllable_audio_segments(self, syllables):
         audio_segments = [self.get_audio_for_syllable(syllable=syllable) for syllable in syllables]
         return audio_segments
+
