@@ -12,6 +12,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s"
 )
+logging.getLogger("pydub.converter").setLevel(logging.WARNING)
 
 
 class Library(object):
@@ -47,7 +48,7 @@ class Library(object):
         audio_segment = AudioSegment.from_mp3(self.get_path(syllable=syllable))
         # Careful with the below let you end up removing vyanjana-s and even some svara-s!
         # audio_segment = pydub.effects.speedup(audio_segment, playback_speed=1)
-        audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=50, silence_thresh=-32, padding=50)
+        audio_segment = pydub.effects.strip_silence(audio_segment, silence_len=100, silence_thresh=-32, padding=100)
         return audio_segment
 
     def get_syllable_audio_segments(self, syllables):
