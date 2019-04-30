@@ -28,11 +28,12 @@ class Library(object):
             if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
                 uncovered_syllables.append(syllable)
         return set(uncovered_syllables)
-    
+
     def expand_to_cover(self, syllables):
         uncovered_syllables = self.get_uncovered(syllables=syllables)
         if len(uncovered_syllables) > 0:
-            logging.info("We're going to record sounds for the following syllables into the sound library: %s", syllables)
+            logging.info("We got a text of %d syllables, of which %d lack audio.", len(syllables), len(uncovered_syllables))
+            logging.info("We're going to record sounds for the following syllables into the sound library: %d", len(uncovered_syllables))
             for syllable in uncovered_syllables:
                 file_path = self.get_path(syllable=syllable)
                 recorder.KeyPressTriggeredRecorder().record(fname=file_path)
