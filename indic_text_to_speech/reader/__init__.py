@@ -20,7 +20,7 @@ def from_markdown_file(file_path, ignore_comments=True):
             sentences.append(yml["title"])
 
         ## Treat headings as sentences.
-        md = regex.sub("^#(.+)\s*$", "$1॥", md)
+        md = regex.sub("^#(.+)\s*\n", "$1॥ ", md)
 
         if ignore_comments:
             ## Ignore comments.
