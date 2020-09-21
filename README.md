@@ -1,3 +1,4 @@
+^[![Build status](https://github.com/sanskrit-coders/indic_text_to_speech/workflows/Python%20package/badge.svg)](https://github.com/sanskrit-coders/indic_text_to_speech/actions)
 [![Build Status](https://travis-ci.org/sanskrit-coders/indic_text_to_speech.svg?branch=master)](https://travis-ci.org/sanskrit-coders/indic_text_to_speech)
 [![Documentation Status](https://readthedocs.org/projects/indic_text_to_speech/badge/?version=latest)](http://indic_text_to_speech.readthedocs.io/en/latest/?badge=latest)
 
