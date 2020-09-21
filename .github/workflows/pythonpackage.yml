@@ -34,7 +34,7 @@ jobs:
 #        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Build package
       run: |
-        python setup.py install
+        python -m pip install .
     - name: Build test
       run: |
         python -c "import indic_text_to_speech"
