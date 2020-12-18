@@ -20,8 +20,8 @@ class Library(object):
         self.path = path
 
     def get_path(self, syllable):
-        return os.path.join(self.path, "syllable_sounds", syllable[0], syllable + ".mp3")
-    
+        return os.path.join(self.path, "syllable_sounds", syllable[0], syllable + ".wav")
+
     def get_uncovered(self, syllables):
         uncovered_syllables = []
         for syllable in syllables:
@@ -38,7 +38,7 @@ class Library(object):
             for syllable in uncovered_syllables:
                 file_path = self.get_path(syllable=syllable)
                 recorder.KeyPressTriggeredRecorder().record(fname=file_path)
-    
+
     def get_syllable_files(self, syllables):
         self.expand_to_cover(syllables=syllables)
         return [self.get_path(syllable=syllable) for syllable in syllables]
