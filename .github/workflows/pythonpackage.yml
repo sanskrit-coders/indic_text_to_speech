@@ -35,7 +35,7 @@ jobs:
     - name: Build package
       run: |
         python -m pip install .
-        python setup.py sdist bdist_wheel
+        python setup.py bdist_wheel
     - name: Build test
       run: |
         python -c "import indic_text_to_speech"
